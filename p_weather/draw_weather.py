@@ -237,7 +237,7 @@ class DrawWeather():
         tf = t+dt*(nforecasrt+1)
         for holiday_obj in self.cfg.GetAllHolidays(t,tf ):
             assert holiday_obj!=None
-            t_holiday = holiday_obj.MakeTimeStart(t) 
+            t_holiday = holiday_obj.MakeTimeStart(t.year) 
             assert t_holiday!= None
             dx = self.TimeDiffToPixels(t_holiday-t) 
             hypos = holiday_obj.yoffset

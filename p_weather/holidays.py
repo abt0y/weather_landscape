@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass
 from typing import List,Tuple
 import datetime
-
+import traceback
 
 @dataclass
 class WLHEntry:
@@ -66,11 +66,10 @@ class WLHEntry:
             
             
     def MakeTimeStart(self,year:int):
-        try:
-            st = datetime.datetime(year,self.month, self.day, self.hour, self.min, 0, 0)
-        except:
-            st = None
+        assert isinstance(year, int) 
+        st = datetime.datetime(year,self.month, self.day, self.hour, self.min, 0, 0)
         return st
+        
         
     def MakeTimeStop(self,year:int):
         st = self.MakeTimeStart(year)
@@ -127,7 +126,8 @@ class WLHolidays(object):
                 title = obj.get("title", "Unknown")
                 print("Loaded %i of '%s' from '%s'" % (len(entries),obj.get("title", "something"),filepath))   
                 for e in self.data:
-                    t = e.MakeTimeStart( datetime.datetime.now() ) 
+                    year = datetime.datetime.now().year
+                    t = e.MakeTimeStart( year ) 
                     if (t==None):
                         print("Date error in %s" % str(e))   
             except Exception as e:
