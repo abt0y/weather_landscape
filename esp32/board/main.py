@@ -4,8 +4,9 @@ from eink import EInk
 from led import Led,LedDummy
 from esp32_regs import GetResetCauseText
 
+import sys
 import time
-from machine import deepsleep,reset
+from machine import deepsleep,lightsleep,reset
 
 
 def print_message(text=None):
@@ -31,8 +32,11 @@ def print_error(text):
     print("Sleep %i sec" % error_sleep_sec)
     time.sleep(error_sleep_sec)
     
-    
-
+def start_sleep(ms, mode):
+    if mode == "light":
+        lightsleep(ms)
+    else:
+        deepsleep(ms)
 
 cfg = AppConfig()
 #led = Led(cfg.PIN_LED)
@@ -49,29 +53,23 @@ print("------")
 error_count = 0
 
 while (True):
-    
-    
-    errortext = ""
+    img = None
+    update_time = ""
     try:
-        rc = wlan.connect()
+        img, update_time = wlan.load()
     except Exception as e:
-        errortext = str(e)
-        rc=False
-
-   
-    if (not rc):
-        print_error("WiFi connection failed."+errortext)
-        continue
+        print_error(f"Image load failed: {e}")
     
-    try:
-        img = wlan.load()
-    except Exception as e:
-        print_error("\n  Image load failed.\n  "+str(e)+"\n" )
-        continue
-
-    error_count = 0
-    assert img!=None
-    eink.show(img)
+    if img:
+        error_count = 0
+        eink.show(img, update_time=update_time)
+    else:
+        print("Skipping display update due to error.")
     
-    print("Deep sleep %i sec" % (cfg.IMAGE_RELOAD_PERIOD_MS/1000))
-    deepsleep(cfg.IMAGE_RELOAD_PERIOD_MS)
+    sleep_ms = cfg.IMAGE_RELOAD_PERIOD_MS
+    sleep_mode = eink.sleep_mode
+    print("Entering system %s sleep for %i sec..." % (sleep_mode, sleep_ms / 1000))
+    if hasattr(sys, 'stdout') and hasattr(sys.stdout, 'flush'):
+        sys.stdout.flush()
+    time.sleep_ms(100)
+    start_sleep(sleep_ms, sleep_mode)
